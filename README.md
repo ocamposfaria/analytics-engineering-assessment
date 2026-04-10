@@ -24,6 +24,10 @@ The data model is centered on lead lifecycle analysis (intake, qualification, si
 
 ![Dashboard preview](image.png)
 
+## Demo video
+
+Recorded walkthrough on YouTube: [https://youtu.be/rcZa8i5B57s](https://youtu.be/rcZa8i5B57s)
+
 ## Technical Architecture
 
 1. **Transformation + Warehouse:** `dbt` runs transformations on top of `DuckDB`, materializing analytics-ready tables and marts from the seed dataset.
