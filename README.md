@@ -1,10 +1,30 @@
 # Analytics Engineer Assessment
 
-End-to-end analytics project: **dbt** on DuckDB builds curated marts, **FastAPI** serves them, and a static **web dashboard** consumes the API.
+This repository implements a technical analytics stack for a lead-conversion workflow.  
+Raw lead records are transformed with **dbt + DuckDB** into analytics-ready models, exposed through a **FastAPI** service, and consumed by a static **dashboard**.
+
+The data model is centered on lead lifecycle analysis (intake, qualification, signup), with segmentation by agent, source, status, and time. The project is designed to show practical analytics engineering patterns:
+
+- layered dbt modeling (`staging` -> `intermediate` -> `marts`)
+- reproducible local warehouse execution in DuckDB
+- API-first consumption of curated marts
+- dashboard integration over filtered API endpoints
+- optional assistant routes that run validated read-only SQL
 
 ## Preview
 
 ![Dashboard preview](image.png)
+
+## Technical Architecture
+
+1. **Ingestion layer (seed):** `vineskills_analytics/seeds/raw_leads.csv`
+2. **Staging layer:** canonicalized source structure in `stg_leads`
+3. **Intermediate layer:** enriched lead-level table `int_leads_enriched`
+4. **Mart layer:** KPI and slice-and-dice marts for funnel, conversion, trend, and velocity analysis
+5. **Serving layer:** FastAPI endpoints over DuckDB marts
+6. **Consumption layer:** static dashboard in `web/` + API docs in Swagger/ReDoc
+
+DuckDB is used as the analytical store, dbt provides transformation/testing/documentation, and FastAPI acts as a thin serving layer for analytics consumption.
 
 ## Repository Layout
 
@@ -27,15 +47,13 @@ Install dependencies once from the repository root:
 pip install -r requirements.txt
 ```
 
-Optional local config: copy `.env.example` to `.env` and set your values.
-
 ## Start Services by Operating System
 
-Run one short dbt preparation step, then start the 3 services.
+Run one dbt preparation step, then start the 3 services.
 
 ### Windows (PowerShell)
 
-Terminal 1 (build dbt artifacts):
+Terminal 1 (prepare warehouse artifacts):
 
 ```powershell
 cd .\vineskills_analytics
@@ -63,39 +81,9 @@ Terminal 4 (dashboard static server):
 python -m http.server 8080
 ```
 
-### macOS (zsh/bash)
+### macOS / Linux (zsh/bash)
 
-Terminal 1 (build dbt artifacts):
-
-```bash
-cd vineskills_analytics
-dbt build
-dbt docs generate
-cd ..
-```
-
-Terminal 2 (FastAPI):
-
-```bash
-uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
-```
-
-Terminal 3 (dbt docs):
-
-```bash
-cd vineskills_analytics
-dbt docs serve --port 8081
-```
-
-Terminal 4 (dashboard static server):
-
-```bash
-python3 -m http.server 8080
-```
-
-### Linux (bash/zsh)
-
-Terminal 1 (build dbt artifacts):
+Terminal 1 (prepare warehouse artifacts):
 
 ```bash
 cd vineskills_analytics
@@ -139,8 +127,3 @@ python3 -m http.server 8080
 | `OPENAI_API_KEY` | Required for assistant endpoints |
 | `OPENAI_MODEL` | Optional model override for assistant |
 | `ASSISTANT_SQLITE_PATH` | Optional override for assistant SQLite path |
-
-## Notes
-
-- The dashboard calls `http://127.0.0.1:8000` by default (`window.DASH_API_BASE` in `web/dashboard.js`).
-- Stop services with `Ctrl + C` in each terminal.
