@@ -1,94 +1,122 @@
 # Analytics Engineer Assessment
 
-End-to-end analytics exercise: a **dbt** project on DuckDB builds curated marts from lead data; a **FastAPI** backend serves those marts to a **static dashboard** and to an **OpenAI tool-calling assistant** that runs read-only SQL.
+Projeto end-to-end de analytics: o **dbt** em DuckDB materializa marts de conversao; o **FastAPI** expoe os dados (incluindo Swagger e endpoints da assistente); e o **dashboard** estatico consome esses endpoints.
 
-## Repository layout
+## Preview
 
-| Path | Purpose |
-|------|--------|
-| `web/` | Dashboard: `index.html`, `app.css`, `dashboard.js` (and `styles.css`) |
-| `api.py` | FastAPI app: `/api/dashboard`, filters, debug endpoints, assistant routes |
-| `assistant_chat.py` | Assistant agent, SQLite session store under `data/` |
-| `data/` | Created at runtime for `assistant_chat.sqlite` (see `ASSISTANT_SQLITE_PATH`) |
-| `vineskills_analytics/` | dbt project (models, seeds, analyses, `profiles.yml`) |
-| `docs/` | Working notes (e.g. narrative draft for the dashboard) |
-| `requirements.txt` | Single consolidated Python dependency list |
-| `index.html` (root) | Redirects to `web/index.html` so the dashboard stays easy to open from the repo root |
+![Dashboard preview](image.png)
 
-## Prerequisites
+## Estrutura do repositorio
 
-- Python 3.10+ (recommended)
-- An OpenAI API key in the environment if you use the data assistant (`OPENAI_API_KEY`)
+| Caminho | Finalidade |
+|---|---|
+| `backend/` | Backend Python (`api.py` + `assistant_chat.py`) |
+| `web/` | Dashboard (`index.html`, `app.css`, `dashboard.js`) |
+| `vineskills_analytics/` | Projeto dbt (models, seeds, analyses, `profiles.yml`) |
+| `data/` | Criado em runtime para `assistant_chat.sqlite` |
+| `requirements.txt` | Dependencias Python |
+| `index.html` (raiz) | Redirect para `web/index.html` |
 
-## Python environment
+## Pre-requisitos
 
-From the repository root:
+- Python 3.10+
+- `pip`
+- (Opcional) `OPENAI_API_KEY` para usar os endpoints da assistente
+- Dependencias do dbt (ja incluidas em `requirements.txt`)
+
+## 1) Instalar dependencias (Windows, macOS e Linux)
+
+No diretorio raiz do projeto:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-To configure assistant credentials safely, copy `.env.example` to `.env` and set your real values locally.
-The API loads `.env` automatically on startup.
+Se for usar variaveis locais, copie `.env.example` para `.env`. O backend faz load automatico desse arquivo.
 
-The file `vineskills_analytics/requirements.txt` only references the root file, so `pip install -r vineskills_analytics/requirements.txt` from inside that folder installs the same stack.
+## 2) Build do warehouse com dbt
 
-## Start the project (recommended)
+No diretorio raiz do projeto, rode:
 
-From the repository root on Windows PowerShell:
+### Windows (PowerShell)
 
 ```powershell
-.\start_project.ps1
+cd .\vineskills_analytics
+dbt build
+dbt docs generate
+cd ..
 ```
 
-What this script does:
-
-1. Runs `dbt docs generate`.
-2. Starts FastAPI at `http://127.0.0.1:8000` (Swagger in `/docs`).
-3. Starts dbt docs at `http://127.0.0.1:8081`.
-4. Starts a static web server for the dashboard at `http://127.0.0.1:8080/web/`.
-5. Opens all 3 pages automatically in your browser:
-   - `http://127.0.0.1:8000/docs`
-   - `http://127.0.0.1:8081`
-   - `http://127.0.0.1:8080/web/`
-
-If any service is already running, the script detects the port and skips starting a duplicate process (prevents "address already in use" errors).
-
-To stop everything, close the PowerShell windows opened by the script.
-
-## Build the warehouse (dbt)
+### macOS / Linux (bash/zsh)
 
 ```bash
 cd vineskills_analytics
 dbt build
+dbt docs generate
+cd ..
 ```
 
-This materializes DuckDB (default path: `vineskills_analytics/target/vineskills.duckdb`, overridable with `DUCKDB_PATH` when running the API).
+Isso gera o banco DuckDB em `vineskills_analytics/target/vineskills.duckdb` (ou no caminho definido em `DUCKDB_PATH`).
 
-## Run the API
+## 3) Subir os 3 servicos
 
-From the repository root (so imports and paths resolve as in development):
+Abra **3 terminais** diferentes na raiz do repositorio.
+
+### Terminal A - FastAPI (API + Swagger)
+
+Comando igual para Windows/macOS/Linux:
 
 ```bash
-uvicorn api:app --reload --host 127.0.0.1 --port 8000
+uvicorn backend.api:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The dashboard expects the API at `http://127.0.0.1:8000` by default (`window.DASH_API_BASE` in `web/dashboard.js` overrides this).
+Acessos:
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+- Health: `http://127.0.0.1:8000/health`
 
-## Open the dashboard
+### Terminal B - dbt Docs
 
-- **Direct file:** open `web/index.html` in a browser, or open the root `index.html` (it redirects to `web/`).
-- **Local HTTP server** from the repo root (example): `python -m http.server 8080` then visit `http://127.0.0.1:8080/web/` (or `http://127.0.0.1:8080/` via the root redirect).
+No diretorio `vineskills_analytics`:
 
-## Environment variables (reference)
+#### Windows (PowerShell)
 
-| Variable | Role |
-|----------|------|
-| `DUCKDB_PATH` | Path to the DuckDB file used by the API and assistant |
-| `OPENAI_API_KEY` | Required for assistant endpoints |
-| `OPENAI_MODEL` | Optional model override (default in `assistant_chat.py`) |
-| `ASSISTANT_SQLITE_PATH` | Optional path for assistant conversation SQLite |
+```powershell
+cd .\vineskills_analytics
+dbt docs serve --port 8081
+```
 
-## License / context
+#### macOS / Linux (bash/zsh)
 
-Assessment / portfolio project; adjust as needed for your use case.
+```bash
+cd vineskills_analytics
+dbt docs serve --port 8081
+```
+
+Acesso: `http://127.0.0.1:8081`
+
+### Terminal C - Dashboard estatico
+
+Comando igual para Windows/macOS/Linux:
+
+```bash
+python -m http.server 8080
+```
+
+Acesso:
+- Dashboard direto: `http://127.0.0.1:8080/web/`
+- Redirect da raiz: `http://127.0.0.1:8080/`
+
+## Variaveis de ambiente (referencia)
+
+| Variavel | Uso |
+|---|---|
+| `DUCKDB_PATH` | Caminho do DuckDB usado pela API e assistente |
+| `OPENAI_API_KEY` | Necessaria para endpoints da assistente |
+| `OPENAI_MODEL` | Override opcional de modelo na assistente |
+| `ASSISTANT_SQLITE_PATH` | Caminho opcional do SQLite de conversas |
+
+## Observacoes
+
+- O dashboard espera API em `http://127.0.0.1:8000` por padrao (configuravel em `window.DASH_API_BASE` em `web/dashboard.js`).
+- Para encerrar tudo, interrompa os 3 terminais (`Ctrl + C`).

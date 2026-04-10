@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SQLITE = ROOT / "data" / "assistant_chat.sqlite"
 SQLITE_PATH = Path(os.getenv("ASSISTANT_SQLITE_PATH", str(DEFAULT_SQLITE))).resolve()
 
@@ -459,4 +459,3 @@ def register_assistant_routes(
         )
 
     app.include_router(router)
-

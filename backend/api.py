@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Any
 
 import duckdb
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
 DEFAULT_DB = ROOT / "vineskills_analytics" / "target" / "vineskills.duckdb"
 DB_PATH = Path(os.getenv("DUCKDB_PATH", str(DEFAULT_DB))).resolve()
@@ -506,7 +506,7 @@ def get_filter_options() -> dict[str, Any]:
 
 @app.post("/api/query")
 def run_readonly_query(body: SqlQueryBody) -> dict[str, Any]:
-    """Executa uma única instrução SQL somente leitura (SELECT / WITH / SHOW / DESCRIBE)."""
+    """Executa uma unica instrucao SQL somente leitura (SELECT / WITH / SHOW / DESCRIBE)."""
     if not DB_PATH.exists():
         logger.error("POST /api/query aborted: DuckDB missing at %s", DB_PATH)
         raise HTTPException(
@@ -548,6 +548,6 @@ def run_readonly_query(body: SqlQueryBody) -> dict[str, Any]:
         con.close()
 
 
-from assistant_chat import register_assistant_routes
+from backend.assistant_chat import register_assistant_routes
 
 register_assistant_routes(app, execute_readonly_sql_internal)
