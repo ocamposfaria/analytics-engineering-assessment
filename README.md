@@ -29,8 +29,6 @@ The data model is centered on lead lifecycle analysis (intake, qualification, si
 3. **Consumption layer:** the `web/` dashboard consumes FastAPI endpoints for visualization.
 4. **AI assistant layer:** the dashboard also integrates an OpenAI-powered assistant that answers analytical questions in real time through validated read-only SQL execution.
 
-The dbt model organization (`staging`, `intermediate`, `marts`) is a transformation design pattern inside the Transformation + Warehouse component, not a separate runtime architecture tier.
-
 ## Repository Layout
 
 | Path | Purpose |
