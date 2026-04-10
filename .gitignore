@@ -4,7 +4,7 @@
 !.env.example
 
 # Local runtime data
-data/
+backend/data/
 logs/
 *.sqlite
 *.duckdb
