@@ -1,0 +1,10 @@
+version: 2
+
+seeds:
+  - name: raw_leads
+    description: Dados de exemplo do assessment Vineskills (leads de vendas).
+    columns:
+      - name: lead_id
+        tests:
+          - not_null
+          - unique

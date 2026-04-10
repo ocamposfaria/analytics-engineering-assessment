@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>Analytics Engineering Assessment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body class="is-loading">
+    <div id="page-loader" class="page-loader" role="status" aria-live="polite" aria-label="Loading dashboard">
+      <div class="loader-card">
+        <div class="loader-spinner" aria-hidden="true"></div>
+        <p id="loader-text" class="loader-text">Loading data…</p>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <img
+          class="brand-logo"
+          src="https://images.squarespace-cdn.com/content/v1/6334c3d4a23875627febfe84/03cffd60-09bd-4d02-98f5-f5ee3ecfbad8/Vineskills_logo.png?format=300w"
+          width="220"
+          height="56"
+          alt="VineSkills"
+        />
+      </div>
+    </header>
+    <div class="reading-progress" aria-hidden="true">
+      <span id="reading-progress-bar" class="reading-progress-bar"></span>
+    </div>
+
+    <main class="shell main">
+      <section id="overview" class="section hero">
+        <h1>Commercial lead conversion performance</h1>
+        <p class="hero-subtitle">Analytics Engineering Assessment</p>
+        <div id="hero-kpis" class="kpi-grid"></div>
+      </section>
+
+      <section id="data-dictionary" class="section">
+        <h2>Data and dictionary</h2>
+        <div class="intro-grid">
+          <article class="card">
+            <h3>Dataset</h3>
+            <p>Sourced from the dbt seed <code>raw_leads</code>: one row per lead.</p>
+          </article>
+          <article class="card">
+            <h3>Business context</h3>
+            <p>Goal is to convert leads to a subscription (<code>signed_up</code>).</p>
+          </article>
+          <article class="card">
+            <h3>Purpose of this analysis</h3>
+            <p>Surface funnel friction and opportunities by agent and lead source.</p>
+          </article>
+          <article class="card">
+            <h3>Coverage and limitations</h3>
+            <p>Test leads are excluded from KPIs; <code>qualified_flag</code> is not the same as a closed sale.</p>
+          </article>
+        </div>
+        <div class="card dictionary-card">
+          <h3>Simplified data dictionary</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>How to use</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>lead_id</code></td><td>text</td><td>Unique identifier of each lead</td><td>Use as key for lead-level checks and traceability</td></tr>
+                <tr><td><code>created_date</code></td><td>date</td><td>Date the lead entered the pipeline</td><td>Main timeline for trend analysis and date filters</td></tr>
+                <tr><td><code>status</code></td><td>text</td><td>Current stage of the lead</td><td>Interpret funnel charts as a snapshot of current states</td></tr>
+                <tr><td><code>agent_name</code></td><td>text</td><td>Sales owner of the lead</td><td>Primary dimension for performance by agent</td></tr>
+                <tr><td><code>lead_source</code></td><td>text</td><td>Acquisition channel/source</td><td>Primary dimension for channel quality analysis</td></tr>
+                <tr><td><code>qualified_flag</code> / <code>is_qualified</code></td><td>0/1, boolean</td><td>Whether lead passed qualification criteria</td><td>Use to read mid-funnel quality and qualification rates</td></tr>
+                <tr><td><code>signed_up_date</code> / <code>is_signed_up</code></td><td>date, boolean</td><td>Final conversion marker (became customer)</td><td>Core signal for signup volume and conversion rate</td></tr>
+                <tr><td><code>is_test_lead</code></td><td>boolean</td><td>Internal/test records</td><td>Excluded from official dashboard KPIs</td></tr>
+                <tr><td><code>total_leads</code>, <code>qualified_leads</code>, <code>signed_up_leads</code></td><td>integer</td><td>Main aggregate counts</td><td>Read absolute volume before comparing percentages</td></tr>
+                <tr><td><code>qualification_rate_pct</code>, <code>signup_rate_pct</code></td><td>numeric(%)</td><td>Main KPI rates for quality and conversion</td><td>Use with volume to avoid low-sample bias</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="initial-exploration" class="section">
+        <h2>Initial exploration</h2>
+        <p class="section-caption">Volume and distribution baseline before interpreting funnel metrics.</p>
+        <div class="chart-grid">
+          <article class="card chart-card">
+            <h3>Status distribution</h3>
+            <p class="small">Which stage holds the most leads?</p>
+            <div data-chart="status-distribution" class="chart"></div>
+          </article>
+          <article class="card chart-card">
+            <h3>Qualified vs not qualified</h3>
+            <p class="small">Is the pipeline balanced across top, middle, and bottom?</p>
+            <div data-chart="qualification-split" class="chart"></div>
+          </article>
+          <article class="card chart-card">
+            <h3>Volume by agent and source</h3>
+            <p class="small">Who receives the most volume?</p>
+            <div data-chart="volume-comparison" class="chart"></div>
+          </article>
+          <article class="card chart-card">
+            <h3>Lead creation over time</h3>
+            <p class="small">Bars: daily intake (zero on quiet days). Line: 7-day moving average.</p>
+            <div data-chart="intake-trend" class="chart"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="funnel-snapshot" class="section">
+        <h2>Leads by stage (snapshot)</h2>
+        <p class="section-caption">
+          Each lead has one <code>status</code> at a time: the bars are mutually exclusive buckets, not a single queue where every lead visits every stage. For example,
+          <code>No Response</code> ends that lead’s cycle—it does not imply a demo or proposal follows.
+        </p>
+        <p class="section-caption">
+          In <strong>Volume by current state</strong>, bars are ordered like the journey above (from <code>Contacted</code> through the pipeline, with <code>Signed Up</code> and <code>Rejected</code> last). Counts are still a snapshot, not a measured flow between states.
+        </p>
+        <div class="funnel-flow funnel-flow--branching" role="img" aria-labelledby="flow-diagram-desc">
+          <p id="flow-diagram-desc" class="flow-diagram-heading">
+            Conceptual journey (illustrative): from <code>Contacted</code> a lead may go to <code>No Response</code> or <code>Demo Completed</code>; after the demo it may become
+            <code>Unqualified</code> or continue through proposal, negotiation, and <code>Pending Signature</code> to <code>Signed Up</code> or <code>Rejected</code>.
+          </p>
+          <div class="flow-svg-wrap">
+            <svg viewBox="0 0 920 456" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <!-- Visible edges: thin dashed segments; stroke matches neutral node outline -->
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 460 51 L 140 113"
+              />
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 460 51 L 738 110"
+              />
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 738 140 L 300 203"
+              />
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 738 140 L 738 185 L 738 215 L 738 257 L 738 287 L 738 324"
+              />
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 738 368 L 555 403"
+              />
+              <path
+                fill="none"
+                stroke="#a8c4a6"
+                stroke-width="1.1"
+                stroke-opacity="1"
+                stroke-dasharray="3.5 3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M 738 368 L 738 403"
+              />
+              <!-- Hidden geometry for animateMotion (same as visible straight segments) -->
+              <path id="flow-path-noresp" fill="none" stroke="none" d="M 460 51 L 140 113" />
+              <path id="flow-path-demo" fill="none" stroke="none" d="M 460 51 L 738 110" />
+              <path id="flow-path-unq" fill="none" stroke="none" d="M 738 140 L 300 203" />
+              <path
+                id="flow-path-happy"
+                fill="none"
+                stroke="none"
+                d="M 460 51 L 738 110 L 738 140 L 738 185 L 738 215 L 738 257 L 738 287 L 738 324 L 738 368 L 555 403"
+              />
+              <path id="flow-path-rejected" fill="none" stroke="none" d="M 738 368 L 738 403" />
+              <!-- Nodes: neutral boxes except signed_up (green) and rejected (red) -->
+              <g class="flow-node" transform="translate(460,36)">
+                <rect x="-54" y="-16" width="108" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="12.5" font-weight="700" fill="#3d5a42">Contacted</text>
+              </g>
+              <g class="flow-node" transform="translate(140,128)">
+                <rect x="-58" y="-16" width="116" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="#3d5a42">No Response</text>
+              </g>
+              <g class="flow-node" transform="translate(738,125)">
+                <rect x="-68" y="-16" width="136" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#3d5a42">Demo Completed</text>
+              </g>
+              <g class="flow-node" transform="translate(300,218)">
+                <rect x="-60" y="-16" width="120" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="#3d5a42">Unqualified</text>
+              </g>
+              <g class="flow-node" transform="translate(738,200)">
+                <rect x="-64" y="-16" width="128" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="#3d5a42">Proposal Sent</text>
+              </g>
+              <g class="flow-node" transform="translate(738,272)">
+                <rect x="-60" y="-16" width="120" height="32" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="#3d5a42">Negotiation</text>
+              </g>
+              <g class="flow-node" transform="translate(738,346)">
+                <rect x="-66" y="-24" width="132" height="48" rx="9" fill="#ffffff" stroke="#a8c4a6" stroke-width="1.35" />
+                <text text-anchor="middle" y="-6" font-size="11" font-weight="700" fill="#3d5a42">Pending</text>
+                <text text-anchor="middle" y="10" font-size="11" font-weight="700" fill="#3d5a42">Signature</text>
+              </g>
+              <g class="flow-node flow-node--win" transform="translate(555,418)">
+                <rect x="-52" y="-16" width="104" height="32" rx="9" fill="#dff0cc" stroke="#5a9a32" stroke-width="1.55" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="12.5" font-weight="700" fill="#1a4a14">Signed Up</text>
+              </g>
+              <g class="flow-node flow-node--lose" transform="translate(738,418)">
+                <rect x="-50" y="-16" width="100" height="32" rx="9" fill="#fde4e4" stroke="#c03838" stroke-width="1.55" />
+                <text text-anchor="middle" dominant-baseline="central" font-size="11.5" font-weight="700" fill="#7a1818">Rejected</text>
+              </g>
+              <!-- Dots: same fill as connector / neutral outline -->
+              <circle class="motion-dot" r="6" fill="#a8c4a6">
+                <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear">
+                  <mpath href="#flow-path-happy" />
+                </animateMotion>
+              </circle>
+              <circle class="motion-dot" r="6" fill="#a8c4a6">
+                <animateMotion dur="7s" repeatCount="indefinite" calcMode="linear" begin="1.15s">
+                  <mpath href="#flow-path-happy" />
+                </animateMotion>
+              </circle>
+              <circle class="motion-dot" r="6" fill="#a8c4a6">
+                <animateMotion dur="2.8s" repeatCount="indefinite" calcMode="linear">
+                  <mpath href="#flow-path-noresp" />
+                </animateMotion>
+              </circle>
+              <circle class="motion-dot" r="6" fill="#a8c4a6">
+                <animateMotion dur="3.2s" repeatCount="indefinite" calcMode="linear" begin="0.4s">
+                  <mpath href="#flow-path-unq" />
+                </animateMotion>
+              </circle>
+              <circle class="motion-dot" r="6" fill="#a8c4a6">
+                <animateMotion dur="2s" repeatCount="indefinite" calcMode="linear" begin="0.35s">
+                  <mpath href="#flow-path-rejected" />
+                </animateMotion>
+              </circle>
+            </svg>
+          </div>
+          <p class="flow-diagram-footnote">
+            The dots suggest possible paths. In real data, <code>Rejected</code> can occur at other points too; the numeric charts remain a snapshot (one state per lead).
+          </p>
+        </div>
+        <article class="card chart-card">
+          <h3>Volume by current state</h3>
+          <div data-chart="funnel-main" class="chart chart-tall"></div>
+          <div id="funnel-diagnostics" class="diagnostics"></div>
+        </article>
+      </section>
+
+      <section id="performance-dimensions" class="section">
+        <h2>Performance by agent and source</h2>
+        <p class="section-caption">Always read volume and rate together to avoid conclusions from small samples.</p>
+        <div class="filters card">
+          <label>Start date <input id="f-start" type="date" /></label>
+          <label>End date <input id="f-end" type="date" /></label>
+          <label>Agent <select id="f-agent"><option value="">All</option></select></label>
+          <label>Source <select id="f-source"><option value="">All</option></select></label>
+          <button id="f-apply" class="btn btn-primary">Apply</button>
+          <button id="f-reset" class="btn">Clear</button>
+        </div>
+        <div class="chart-grid">
+          <article class="card chart-card">
+            <h3>Comparison by agent</h3>
+            <div data-chart="agent-performance" class="chart"></div>
+          </article>
+          <article class="card chart-card">
+            <h3>Comparison by source</h3>
+            <div data-chart="source-performance" class="chart"></div>
+          </article>
+          <article class="card chart-card span-2">
+            <h3>Agent × source matrix</h3>
+            <div data-chart="agent-source-heatmap" class="chart chart-tall"></div>
+          </article>
+          <article class="card chart-card span-2">
+            <h3>Conversion trend over time</h3>
+            <p class="small">
+              Line: 28-day trailing signup rate (signups ÷ leads created in the same window). Omitted where the window has fewer than 15 leads so single-day noise does not drive the line to 0%.
+            </p>
+            <div data-chart="conversion-trend" class="chart chart-tall"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="final-insights" class="section">
+        <h2>Closing insights</h2>
+        <div id="insights-box" class="card insights"></div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <div class="legal-strip" role="note" aria-label="Legal notice">
+        <p class="legal-strip-text">
+          This dashboard is not an official Vineskills&reg; product. Built solely for an Analytics Engineer hiring assessment.
+        </p>
+      </div>
+    </footer>
+
+    <div id="ai-chat-widget" class="ai-chat-widget" data-state="minimized">
+      <button
+        type="button"
+        id="ai-chat-launcher"
+        class="ai-chat-launcher"
+        aria-expanded="false"
+        aria-controls="ai-chat-panel"
+      >
+        <span class="ai-chat-launcher-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M12 3a7 7 0 0 0-7 7v1.1l-1.2 2.4a1 1 0 0 0 .9 1.4h2.3a7 7 0 1 0 5-11.9Z"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linejoin="round"
+            />
+            <path d="M8.5 14.5h.01M12 14.5h.01M15.5 14.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="ai-chat-launcher-text">Assistant</span>
+      </button>
+
+      <div
+        id="ai-chat-panel"
+        class="ai-chat-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-chat-title"
+        hidden
+      >
+        <header class="ai-chat-header">
+          <div class="ai-chat-header-main">
+            <span class="ai-chat-header-badge" aria-hidden="true"></span>
+            <div>
+              <h2 id="ai-chat-title" class="ai-chat-title">Assistant</h2>
+              <p class="ai-chat-subtitle">Answers use live SQL on your data</p>
+            </div>
+          </div>
+          <div class="ai-chat-header-actions">
+            <button type="button" id="ai-chat-maximize" class="ai-chat-icon-btn" aria-label="Maximize chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <button type="button" id="ai-chat-close" class="ai-chat-icon-btn" aria-label="Minimize chat">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+            </button>
+          </div>
+        </header>
+        <div id="ai-chat-messages" class="ai-chat-messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <form id="ai-chat-form" class="ai-chat-form">
+          <label class="visually-hidden" for="ai-chat-input">Your message</label>
+          <textarea
+            id="ai-chat-input"
+            class="ai-chat-input"
+            rows="1"
+            placeholder="Type a message…"
+            autocomplete="off"
+          ></textarea>
+          <button type="submit" class="btn btn-primary ai-chat-send">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      window.DASH_API_BASE = "http://127.0.0.1:8000";
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

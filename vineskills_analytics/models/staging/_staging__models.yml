@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_leads
+    description: Leads brutos tipados e com nomes padronizados a partir do seed.
+    columns:
+      - name: lead_id
+        description: Identificador único do lead.
+        tests:
+          - not_null
+          - unique
+      - name: created_date
+        tests:
+          - not_null
+      - name: qualified_flag
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]

@@ -1,0 +1,35 @@
+name: vineskills_analytics
+version: 1.0.0
+config-version: 2
+
+profile: vineskills_analytics
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets:
+  - target
+  - dbt_packages
+
+vars:
+  qualified_flag_value: 1
+  signed_up_status: "signed_up"
+
+models:
+  vineskills_analytics:
+    staging:
+      +materialized: view
+      +tags: ["staging"]
+    intermediate:
+      +materialized: view
+      +tags: ["intermediate"]
+    marts:
+      +materialized: table
+      +tags: ["marts"]
+
+seeds:
+  vineskills_analytics:
+    raw_leads:
+      +column_types:
+        qualified_flag: integer

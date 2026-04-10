@@ -1,0 +1,26 @@
+# Local environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+data/
+logs/
+*.sqlite
+*.duckdb
+*.db
+
+# Docs
+docs/
+
+# Cursor local metadata
+.cursor/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# dbt artifacts and logs
+vineskills_analytics/target/
+vineskills_analytics/logs/
+

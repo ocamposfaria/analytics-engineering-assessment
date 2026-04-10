@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: mart_kpis_global
+    description: KPIs globais para a primeira seção da narrativa (overview).
+  - name: mart_funnel_by_status
+    description: Distribuição por status ordenada pelo funil.
+  - name: mart_conversion_by_agent
+    description: Taxas de conversão agregadas por agente.
+  - name: mart_conversion_by_source
+    description: Taxas de conversão por canal de origem.
+  - name: mart_conversion_by_agent_source
+    description: Grão agente × fonte para drill-down.
+  - name: mart_qualified_pipeline_open
+    description: Pipeline qualificado ainda aberto (lista operacional).
+  - name: mart_time_to_signup
+    description: Tempo até assinatura com rollups (agente, fonte, total).
+  - name: mart_daily_intake_trend
+    description: Série diária de criação de leads e outcomes.

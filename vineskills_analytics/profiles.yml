@@ -1,0 +1,11 @@
+# Copie este arquivo para ~/.dbt/profiles.yml ou defina DBT_PROFILES_DIR apontando para esta pasta.
+# dbt-core >= 1.8: perfil local também pode ser usado com --profiles-dir .
+
+vineskills_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_PATH', 'target/vineskills.duckdb') }}"
+      schema: main
+      threads: 4

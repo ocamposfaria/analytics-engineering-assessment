@@ -1,0 +1,11 @@
+# Consolidated Python dependencies for this repo (FastAPI + assistant, dbt + DuckDB).
+# Install from the repository root: pip install -r requirements.txt
+# The dbt project can also use vineskills_analytics/requirements.txt (includes this file).
+
+dbt-core>=1.8.0,<2.0.0
+dbt-duckdb>=1.8.0,<2.0.0
+duckdb>=1.0.0
+fastapi>=0.116.0,<1.0.0
+uvicorn>=0.35.0,<1.0.0
+openai>=1.40.0,<2.0.0
+python-dotenv>=1.0.1,<2.0.0

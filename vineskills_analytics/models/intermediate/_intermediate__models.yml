@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: int_leads_enriched
+    description: >
+      Camada enriquecida com flags de negócio (qualificado, assinou, teste),
+      estágio do funil via macro Jinja e métricas de tempo.
+    columns:
+      - name: lead_id
+        tests:
+          - not_null
+          - unique
+      - name: is_test_lead
+        description: True para leads de teste interno (excluídos dos KPIs principais).
+      - name: is_qualified
+        description: qualified_flag = 1 conforme variável do projeto.
+      - name: is_signed_up
+        description: Status signed_up ou data de assinatura preenchida.
