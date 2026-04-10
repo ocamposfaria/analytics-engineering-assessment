@@ -1,11 +1,13 @@
 # Analytics Engineer Assessment
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![dbt](https://img.shields.io/badge/dbt-Analytics%20Engineering-FF694B?logo=dbt&logoColor=white)](https://www.getdbt.com/)
-[![DuckDB](https://img.shields.io/badge/DuckDB-Local%20Warehouse-FCC624?logo=duckdb&logoColor=black)](https://duckdb.org/)
-[![OpenAI API](https://img.shields.io/badge/OpenAI-API-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
-[![Dashboard](https://img.shields.io/badge/Dashboard-Web-0A66C2?logo=googlechrome&logoColor=white)](./web/)
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://www.getdbt.com/"><img src="https://img.shields.io/badge/dbt-Analytics%20Engineering-FF694B?logo=dbt&logoColor=white" alt="dbt"></a>
+  <a href="https://duckdb.org/"><img src="https://img.shields.io/badge/DuckDB-Local%20Warehouse-FCC624?logo=duckdb&logoColor=black" alt="DuckDB"></a>
+  <a href="https://platform.openai.com/"><img src="https://img.shields.io/badge/OpenAI-API-412991?logo=openai&logoColor=white" alt="OpenAI API"></a>
+  <a href="./web/"><img src="https://img.shields.io/badge/Dashboard-Web-0A66C2?logo=googlechrome&logoColor=white" alt="Dashboard"></a>
+</p>
 
 This repository implements a technical analytics stack for a lead-conversion workflow.  
 Raw lead records are transformed with **dbt + DuckDB** into analytics-ready models, exposed through a **FastAPI** service, and consumed by a static **dashboard** that also includes an AI assistant for real-time analytical Q&A over the database (via OpenAI API + validated read-only SQL execution).
