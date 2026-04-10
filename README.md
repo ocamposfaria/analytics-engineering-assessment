@@ -24,14 +24,12 @@ The data model is centered on lead lifecycle analysis (intake, qualification, si
 
 ## Technical Architecture
 
-1. **Ingestion layer (seed):** `vineskills_analytics/seeds/raw_leads.csv`
-2. **Staging layer:** canonicalized source structure in `stg_leads`
-3. **Intermediate layer:** enriched lead-level table `int_leads_enriched`
-4. **Mart layer:** KPI and slice-and-dice marts for funnel, conversion, trend, and velocity analysis
-5. **Serving layer:** FastAPI endpoints over DuckDB marts
-6. **Consumption layer:** static dashboard in `web/` + API docs in Swagger/ReDoc
+1. **Transformation + Warehouse:** `dbt` runs transformations on top of `DuckDB`, materializing analytics-ready tables and marts from the seed dataset.
+2. **Serving layer:** `FastAPI` exposes curated metrics and filtered analytical endpoints backed by DuckDB.
+3. **Consumption layer:** the `web/` dashboard consumes FastAPI endpoints for visualization.
+4. **AI assistant layer:** the dashboard also integrates an OpenAI-powered assistant that answers analytical questions in real time through validated read-only SQL execution.
 
-DuckDB is used as the analytical store, dbt provides transformation/testing/documentation, and FastAPI acts as a thin serving layer for analytics consumption.
+The dbt model organization (`staging`, `intermediate`, `marts`) is a transformation design pattern inside the Transformation + Warehouse component, not a separate runtime architecture tier.
 
 ## Repository Layout
 
